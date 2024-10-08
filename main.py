@@ -4,12 +4,20 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox,
     QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit
 from PyQt6.QtGui import QAction
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
+from PyQt6.QtCore import QIODevice
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
+        '''实列串口对象并设置初始化参数'''
+        self.serialObject = QSerialPort()
+        self.serialObject.setBaudRate(115200)
+        self.serialObject.setStopBits(QSerialPort.StopBits.OneStop)
+        self.serialObject.setDataBits(QSerialPort.DataBits.Data8)
+        self.serialObject.setFlowControl(QSerialPort.FlowControl.HardwareControl)
+
 
     def initUI(self):
         BUTTON_HEIGHT = 30
@@ -43,10 +51,10 @@ class MainWindow(QMainWindow):
         self.baud_list.setCurrentIndex(3)
         connBox.addWidget(self.baud_list)
 
-        conn_button = QPushButton("连接")
-        conn_button.setFixedHeight(BUTTON_HEIGHT)
-        connBox.addWidget(conn_button)
-        conn_button.clicked.connect(self.on_conn_clicked)
+        self.conn_button = QPushButton("打开串口")
+        self.conn_button.setFixedHeight(BUTTON_HEIGHT)
+        connBox.addWidget(self.conn_button)
+        self.conn_button.clicked.connect(self.on_conn_clicked)
 
         #设置消息显示控件
         msg_area.setStyleSheet("background-color: rgb(255, 255, 255);")
@@ -75,9 +83,30 @@ class MainWindow(QMainWindow):
 
     # 按钮点击事件的处理函数
     def on_conn_clicked(self):
-        message_box = QMessageBox()
-        message_box.setText("连接成功: %s - %s" % (self.com_list.currentText(), self.baud_list.currentText()))
-        message_box.exec()
+        if self.serialObject.isOpen():
+            self.serialObject.close()
+            self.conn_button.setText("打开串口")
+            self.com_list.setEnabled(True)
+            self.baud_list.setEnabled(True)
+            return
+        comName = self.com_list.currentText()
+        for i in QSerialPortInfo.availablePorts():
+            if i.portName() == comName:  ## 查找串口
+                self.serialObject.setPort(i)  ## 设置串口
+                self.serialObject.setBaudRate(int(self.baud_list.currentText()))  ## 设置串口波特率
+                if self.serialObject.open(QIODevice.OpenModeFlag.ReadWrite):
+                    # 打开成功，改变按键提示字符串
+                    self.conn_button.setText("关闭串口")
+                    self.com_list.setEnabled(False)
+                    self.baud_list.setEnabled(False)
+                else:
+                    # 打开失败，弹出提示警告
+                    msg = QMessageBox(QMessageBox.Icon.Warning, "warning", "打开串口失败",
+                                      QMessageBox.StandardButton.Ok)
+                    msg.show()
+                    msg.exec_()
+                break
+
 
     def on_send_clicked(self):
         message_box = QMessageBox()
