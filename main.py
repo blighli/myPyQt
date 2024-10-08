@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox,
     QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit
 from PyQt6.QtGui import QAction
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
-from PyQt6.QtCore import QIODevice
+from PyQt6.QtCore import QIODevice, QByteArray
 
 
 class MainWindow(QMainWindow):
@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         self.serialObject.setStopBits(QSerialPort.StopBits.OneStop)
         self.serialObject.setDataBits(QSerialPort.DataBits.Data8)
         self.serialObject.setFlowControl(QSerialPort.FlowControl.HardwareControl)
+        self.serialObject.readyRead.connect(self.readData)
 
 
     def initUI(self):
@@ -27,12 +28,12 @@ class MainWindow(QMainWindow):
 
         #创建垂直布局结构
         connBox = QHBoxLayout()
-        msg_area = QTextEdit()
+        self.msg_area = QTextEdit()
         sendBox = QHBoxLayout()
 
         vbox = QVBoxLayout()
         vbox.addLayout(connBox)
-        vbox.addWidget(msg_area)
+        vbox.addWidget(self.msg_area)
         vbox.addLayout(sendBox)
         central_widget.setLayout(vbox)
 
@@ -57,17 +58,17 @@ class MainWindow(QMainWindow):
         self.conn_button.clicked.connect(self.on_conn_clicked)
 
         #设置消息显示控件
-        msg_area.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.msg_area.setStyleSheet("background-color: rgb(255, 255, 255);")
 
 
         #创建发送按钮
-        msg_edit = QLineEdit()
-        msg_edit.setFixedHeight(BUTTON_HEIGHT)
-        sendBox.addWidget(msg_edit)
-        send_button = QPushButton("发送")
-        send_button.setFixedHeight(BUTTON_HEIGHT)
-        sendBox.addWidget(send_button)
-        send_button.clicked.connect(self.on_send_clicked)
+        self.msg_edit = QLineEdit()
+        self.msg_edit.setFixedHeight(BUTTON_HEIGHT)
+        sendBox.addWidget(self.msg_edit)
+        self.send_button = QPushButton("发送")
+        self.send_button.setFixedHeight(BUTTON_HEIGHT)
+        sendBox.addWidget(self.send_button)
+        self.send_button.clicked.connect(self.on_send_clicked)
 
         #设置主窗口属性
         self.setGeometry(300, 300, 400, 300)
@@ -109,9 +110,19 @@ class MainWindow(QMainWindow):
 
 
     def on_send_clicked(self):
-        message_box = QMessageBox()
-        message_box.setText("发送成功！")
-        message_box.exec()
+        if self.serialObject.isOpen():
+            data = bytes(self.msg_edit.text(), encoding='utf-8')
+            data = QByteArray(data)
+            self.serialObject.write(data)
+
+            message_box = QMessageBox()
+            message_box.setText("发送成功！")
+            message_box.exec()
+
+    def readData(self):
+        data = self.serialObject.readAll()
+        data = str(data.data(), encoding='utf-8')
+        self.msg_area.append(data)
 
 
 
