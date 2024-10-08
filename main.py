@@ -1,8 +1,7 @@
 import sys
-from argparse import Action
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QMenu, QHBoxLayout, QVBoxLayout, \
-    QWidget, QLCDNumber, QLineEdit
+    QWidget, QLCDNumber, QLineEdit, QComboBox
 from PyQt6.QtGui import QAction
 
 class MainWindow(QMainWindow):
@@ -11,77 +10,82 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        okButton = QPushButton("OK")
-        cancelButton = QPushButton("Cancel")
-
-        hbox = QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(okButton)
-        hbox.addWidget(cancelButton)
-
-        vbox = QVBoxLayout()
-        vbox.addStretch(1)
-        vbox.addLayout(hbox)
+        BUTTON_HEIGHT = 30
 
         central_widget = QWidget()
-        central_widget.setLayout(vbox)
         self.setCentralWidget(central_widget)
 
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('File')
-        newAct = QAction('New', self)
-        fileMenu.addAction(newAct)
-        newAct.triggered.connect(self.on_button_clicked)
+        #创建垂直布局结构
+        connBox = QHBoxLayout()
+        msg_area = QWidget()
+        sendBox = QHBoxLayout()
 
-        self.toolbar = self.addToolBar('Toolbar')
-        self.toolbar.addAction(newAct)
+        vbox = QVBoxLayout()
+        vbox.addLayout(connBox)
+        vbox.addWidget(msg_area)
+        vbox.addLayout(sendBox)
+        central_widget.setLayout(vbox)
 
-        self.statusBar().showMessage('Ready')
+        #创建连接按钮
+        self.com_list = QComboBox()
+        self.com_list.setFixedHeight(BUTTON_HEIGHT)
+        self.com_list.addItem("COM1")
+        self.com_list.addItem("COM2")
+        self.com_list.addItem("COM3")
+        connBox.addWidget(self.com_list)
 
+        self.baud_list = QComboBox()
+        self.baud_list.setFixedHeight(BUTTON_HEIGHT)
+        self.baud_list.addItem("9600")
+        self.baud_list.addItem("115200")
+        connBox.addWidget(self.baud_list)
+
+        conn_button = QPushButton("连接")
+        conn_button.setFixedHeight(BUTTON_HEIGHT)
+        connBox.addWidget(conn_button)
+        conn_button.clicked.connect(self.on_conn_clicked)
+
+        #设置消息显示控件
+        msg_area.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+
+        #创建发送按钮
+        msg_edit = QLineEdit()
+        msg_edit.setFixedHeight(BUTTON_HEIGHT)
+        sendBox.addWidget(msg_edit)
+        send_button = QPushButton("发送")
+        send_button.setFixedHeight(BUTTON_HEIGHT)
+        sendBox.addWidget(send_button)
+        send_button.clicked.connect(self.on_send_clicked)
+
+        #设置主窗口属性
         self.setGeometry(300, 300, 800, 600)
-        self.setWindowTitle("PyQt6 应用程序示例")  # 设置窗口标题
-        # 创建按钮
-        button = QPushButton("Click me!", self)
-        button.setGeometry(300, 200, 200, 50)  # 设置按钮的位置和大小
-        # 将按钮点击事件与处理函数关联
-        button.clicked.connect(self.on_button_clicked)
-
-        self.lcd = QLCDNumber(central_widget)
-        # 显示窗口
+        self.setWindowTitle("串口调试程序")  # 设置窗口标题
         self.center()
         self.show()
-
-    def contextMenuEvent(self, event):
-        cmenu = QMenu(self)
-        newAct = cmenu.addAction('New')
-        openAct = cmenu.addAction('Open')
-        quitAct = cmenu.addAction('Quit')
-        action = cmenu.exec(self.mapToGlobal(event.pos()))
-        if action == quitAct:
-            QApplication.instance().quit()
 
     def center(self):
         qr = self.frameGeometry()
         cp = self.screen().availableGeometry().center()
-
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
     # 按钮点击事件的处理函数
-    def on_button_clicked(self):
-        self.lcd.display(889)
+    def on_conn_clicked(self):
         message_box = QMessageBox()
-        message_box.setText("Hello, PyQt6!")  # 创建一个消息框并显示消息
-        # message_box.exec()
+        message_box.setText("连接成功: %s - %s" % (self.com_list.currentText(), self.baud_list.currentText()))
+        message_box.exec()
+
+    def on_send_clicked(self):
+        message_box = QMessageBox()
+        message_box.setText("发送成功！")
+        message_box.exec()
 
 
 
 def main():
-    # 创建应用程序对象
     app = QApplication(sys.argv)
-    # 创建主窗口
     window = MainWindow()
-    # 运行应用程序的事件循环
     sys.exit(app.exec())
 
 if __name__ == '__main__':
