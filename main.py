@@ -19,11 +19,11 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage('Ready')
 
-        self.setGeometry(300, 300, 400, 300)
+        self.setGeometry(300, 300, 1200, 800)
         self.setWindowTitle("PyQt6 应用程序示例")  # 设置窗口标题
         # 创建按钮
         button = QPushButton("Click me!", self)
-        button.setGeometry(50, 50, 100, 30)  # 设置按钮的位置和大小
+        button.setGeometry(300, 200, 200, 50)  # 设置按钮的位置和大小
         # 将按钮点击事件与处理函数关联
         button.clicked.connect(self.on_button_clicked)
         # 显示窗口
