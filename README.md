@@ -1,1 +1,1 @@
-PyQt6 Project
+# PyQt6 Project
