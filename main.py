@@ -1,8 +1,10 @@
 import sys
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QMenu, QHBoxLayout, QVBoxLayout, \
-    QWidget, QLCDNumber, QLineEdit, QComboBox
+    QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit
 from PyQt6.QtGui import QAction
+from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -17,7 +19,7 @@ class MainWindow(QMainWindow):
 
         #创建垂直布局结构
         connBox = QHBoxLayout()
-        msg_area = QWidget()
+        msg_area = QTextEdit()
         sendBox = QHBoxLayout()
 
         vbox = QVBoxLayout()
@@ -29,15 +31,16 @@ class MainWindow(QMainWindow):
         #创建连接按钮
         self.com_list = QComboBox()
         self.com_list.setFixedHeight(BUTTON_HEIGHT)
-        self.com_list.addItem("COM1")
-        self.com_list.addItem("COM2")
-        self.com_list.addItem("COM3")
+        portList = QSerialPortInfo.availablePorts()
+        portList = sorted(portList, key=lambda x: eval(x.portName()[3:]))
+        for i in portList:
+            self.com_list.addItem(i.portName())
         connBox.addWidget(self.com_list)
 
         self.baud_list = QComboBox()
         self.baud_list.setFixedHeight(BUTTON_HEIGHT)
-        self.baud_list.addItem("9600")
-        self.baud_list.addItem("115200")
+        self.baud_list.addItems(["9600", "19200", "38400", "115200", "230400", "460800", "921600"])
+        self.baud_list.setCurrentIndex(3)
         connBox.addWidget(self.baud_list)
 
         conn_button = QPushButton("连接")
@@ -59,7 +62,7 @@ class MainWindow(QMainWindow):
         send_button.clicked.connect(self.on_send_clicked)
 
         #设置主窗口属性
-        self.setGeometry(300, 300, 800, 600)
+        self.setGeometry(300, 300, 400, 300)
         self.setWindowTitle("串口调试程序")  # 设置窗口标题
         self.center()
         self.show()
