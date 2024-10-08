@@ -104,8 +104,7 @@ class MainWindow(QMainWindow):
                     # 打开失败，弹出提示警告
                     msg = QMessageBox(QMessageBox.Icon.Warning, "warning", "打开串口失败",
                                       QMessageBox.StandardButton.Ok)
-                    msg.show()
-                    msg.exec_()
+                    msg.exec()
                 break
 
 
