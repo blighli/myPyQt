@@ -1,10 +1,11 @@
 import sys
+from warnings import catch_warnings
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QMenu, QHBoxLayout, QVBoxLayout, \
-    QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit
+    QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit, QSlider
 from PyQt6.QtGui import QAction
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
-from PyQt6.QtCore import QIODevice, QByteArray
+from PyQt6.QtCore import QIODevice, QByteArray, Qt
 
 
 class MainWindow(QMainWindow):
@@ -16,7 +17,7 @@ class MainWindow(QMainWindow):
         self.serialObject.setBaudRate(115200)
         self.serialObject.setStopBits(QSerialPort.StopBits.OneStop)
         self.serialObject.setDataBits(QSerialPort.DataBits.Data8)
-        self.serialObject.setFlowControl(QSerialPort.FlowControl.HardwareControl)
+        self.serialObject.setFlowControl(QSerialPort.FlowControl.NoFlowControl)
         self.serialObject.readyRead.connect(self.readData)
 
 
@@ -34,6 +35,25 @@ class MainWindow(QMainWindow):
         vbox = QVBoxLayout()
         vbox.addLayout(connBox)
         vbox.addWidget(self.msg_area)
+
+        # 创建水平方向滑动条
+        self.servoSlider = QSlider(Qt.Orientation.Horizontal)
+        ##设置最小值
+        self.servoSlider.setMinimum(0)
+        # 设置最大值
+        self.servoSlider.setMaximum(180)
+        # 步长
+        self.servoSlider.setSingleStep(10)
+        # 设置当前值
+        self.servoSlider.setValue(90)
+        # 刻度位置，刻度下方
+        self.servoSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        # 设置刻度间距
+        self.servoSlider.setTickInterval(10)
+        vbox.addWidget(self.servoSlider)
+        # 设置连接信号槽函数
+        self.servoSlider.valueChanged.connect(self.servoSliderChange)
+
         vbox.addLayout(sendBox)
         central_widget.setLayout(vbox)
 
@@ -82,6 +102,19 @@ class MainWindow(QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def sendData(self, data):
+        if self.serialObject.isOpen():
+            byteArray = QByteArray(data)
+            self.serialObject.write(byteArray)
+
+    def sendText(self, text):
+        data = bytes(text, encoding='utf-8')
+        self.sendData(data)
+
+    def servoSliderChange(self):
+        degree = self.servoSlider.value()
+        self.sendText(str(degree))
+
     # 按钮点击事件的处理函数
     def on_conn_clicked(self):
         if self.serialObject.isOpen():
@@ -107,21 +140,16 @@ class MainWindow(QMainWindow):
                     msg.exec()
                 break
 
-
     def on_send_clicked(self):
-        if self.serialObject.isOpen():
-            data = bytes(self.msg_edit.text(), encoding='utf-8')
-            data = QByteArray(data)
-            self.serialObject.write(data)
-
-            message_box = QMessageBox()
-            message_box.setText("发送成功！")
-            message_box.exec()
+        self.sendText(self.msg_edit.text())
 
     def readData(self):
-        data = self.serialObject.readAll()
-        data = str(data.data(), encoding='utf-8')
-        self.msg_area.append(data)
+        try:
+            data = self.serialObject.readAll()
+            data = str(data.data(), encoding='utf-8')
+            self.msg_area.append(data)
+        except:
+            self.msg_area.append("error\n")
 
 
 
