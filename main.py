@@ -44,11 +44,10 @@ class MainWindow(QMainWindow):
         leftBox.addLayout(sendBox)
 
         #布局右侧窗格，创建拨号盘
-        self.dial = QDial()
-        rightBox.addWidget(self.dial)
         self.lcd = QLCDNumber()
         rightBox.addWidget(self.lcd)
-        # 创建水平方向滑动条
+        self.dial = QDial()
+        rightBox.addWidget(self.dial)
         self.servoSlider = QSlider(Qt.Orientation.Horizontal)
         rightBox.addWidget(self.servoSlider)
 
