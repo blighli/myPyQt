@@ -2,7 +2,7 @@ import sys
 from warnings import catch_warnings
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QMenu, QHBoxLayout, QVBoxLayout, \
-    QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit, QSlider
+    QWidget, QLCDNumber, QLineEdit, QComboBox, QTextEdit, QSlider, QDial
 from PyQt6.QtGui import QAction
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt6.QtCore import QIODevice, QByteArray, Qt
@@ -27,35 +27,31 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        #创建垂直布局结构
+        #创建整体左右布局
+        mainBox = QHBoxLayout()
+        leftBox = QVBoxLayout()
+        rightBox = QVBoxLayout()
+        mainBox.addLayout(leftBox)
+        mainBox.addLayout(rightBox)
+        central_widget.setLayout(mainBox)
+
+        #创建左侧垂直布局结构
         connBox = QHBoxLayout()
         self.msg_area = QTextEdit()
         sendBox = QHBoxLayout()
+        leftBox.addLayout(connBox)
+        leftBox.addWidget(self.msg_area)
+        leftBox.addLayout(sendBox)
 
-        vbox = QVBoxLayout()
-        vbox.addLayout(connBox)
-        vbox.addWidget(self.msg_area)
-
+        #布局右侧窗格，创建拨号盘
+        self.dial = QDial()
+        rightBox.addWidget(self.dial)
+        self.lcd = QLCDNumber()
+        rightBox.addWidget(self.lcd)
         # 创建水平方向滑动条
         self.servoSlider = QSlider(Qt.Orientation.Horizontal)
-        ##设置最小值
-        self.servoSlider.setMinimum(0)
-        # 设置最大值
-        self.servoSlider.setMaximum(180)
-        # 步长
-        self.servoSlider.setSingleStep(10)
-        # 设置当前值
-        self.servoSlider.setValue(90)
-        # 刻度位置，刻度下方
-        self.servoSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
-        # 设置刻度间距
-        self.servoSlider.setTickInterval(10)
-        vbox.addWidget(self.servoSlider)
-        # 设置连接信号槽函数
-        self.servoSlider.valueChanged.connect(self.servoSliderChange)
+        rightBox.addWidget(self.servoSlider)
 
-        vbox.addLayout(sendBox)
-        central_widget.setLayout(vbox)
 
         #创建连接按钮
         self.com_list = QComboBox()
@@ -89,6 +85,26 @@ class MainWindow(QMainWindow):
         self.send_button.setFixedHeight(BUTTON_HEIGHT)
         sendBox.addWidget(self.send_button)
         self.send_button.clicked.connect(self.on_send_clicked)
+
+        #设置拨号盘
+        self.dial.setRange(0,180)
+        self.dial.setPageStep(45)
+        self.dial.setNotchTarget(10)
+        self.dial.setNotchesVisible(True)
+        self.dial.valueChanged.connect(self.servoSlider.setValue)
+        self.dial.valueChanged.connect(self.lcd.display)
+
+        #设置滑条
+        self.servoSlider.setFixedHeight(50)
+        self.servoSlider.setMinimum(0)
+        self.servoSlider.setMaximum(180)
+        self.servoSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self.servoSlider.setTickInterval(10)
+        self.servoSlider.setPageStep(45)
+        self.servoSlider.setSingleStep(10)
+        self.servoSlider.setValue(90)
+        self.servoSlider.valueChanged.connect(self.dial.setValue)
+        self.servoSlider.valueChanged.connect(self.servoSliderChange)
 
         #设置主窗口属性
         self.setGeometry(300, 300, 400, 300)
