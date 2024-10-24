@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
                 break
 
     def on_send_clicked(self):
-        self.sendText(self.msg_edit.text() + "\r\n")
+        self.sendText(self.msg_edit.text())
 
     def readData(self):
         try:
